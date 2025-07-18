@@ -45,8 +45,8 @@ pub enum Error {
 }
 
 impl Cmd {
-    pub async fn get_spec(&self, global_args: &global::Args) -> Result<(String, Vec<ScSpecEntry>), Error> {
-        let print = Print::new(global_args.quiet);
+    pub async fn get_spec(&self, global_args: Option<&global::Args>) -> Result<(String, Vec<ScSpecEntry>), Error> {
+        let print = Print::new(global_args.is_some_and(|a| a.quiet));
         let Fetched { contract, .. } = fetch(&self.common, &print).await?;
 
         let (base64, spec) = match contract {
@@ -67,7 +67,7 @@ impl Cmd {
     }
 
     pub async fn run(&self, global_args: &global::Args) -> Result<(), Error> {
-        let (base64, spec) = self.get_spec(global_args).await?;
+        let (base64, spec) = self.get_spec(Some(global_args)).await?;
 
         let res = match self.output {
             InfoOutput::XdrBase64 => base64,
