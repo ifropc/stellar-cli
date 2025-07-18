@@ -6,6 +6,7 @@ use crate::commands::global;
 use crate::print::Print;
 use clap::{command, Parser};
 use soroban_spec_rust::ToFormattedString;
+use stellar_xdr::curr::ScSpecEntry;
 use soroban_spec_tools::contract;
 use soroban_spec_tools::contract::Spec;
 
@@ -44,7 +45,7 @@ pub enum Error {
 }
 
 impl Cmd {
-    pub async fn run(&self, global_args: &global::Args) -> Result<(), Error> {
+    pub async fn get_spec(&self, global_args: &global::Args) -> Result<(String, Vec<ScSpecEntry>), Error> {
         let print = Print::new(global_args.quiet);
         let Fetched { contract, .. } = fetch(&self.common, &print).await?;
 
@@ -62,6 +63,11 @@ impl Cmd {
                 Spec::spec_to_base64(&soroban_sdk::token::StellarAssetSpec::spec_xdr())?
             }
         };
+        Ok((base64, spec))
+    }
+
+    pub async fn run(&self, global_args: &global::Args) -> Result<(), Error> {
+        let (base64, spec) = self.get_spec(global_args).await?;
 
         let res = match self.output {
             InfoOutput::XdrBase64 => base64,
